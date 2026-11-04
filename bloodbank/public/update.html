@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update {S} | Sowmya Blood Bank Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="update.html" data-title="Update {S}">
+<div id="page-content">
+<div class="split"><div class="split-main">
+  <div id="entityTabs"></div>
+  <div class="page-head">
+    <div><h1 data-tpl="Update {S}">Update record</h1><p data-tpl="Select a {s}, review its details and save your changes.">Update a record.</p></div>
+  </div>
+  <section class="card form-narrow">
+    <div class="card-head"><div><h2 data-tpl="Select {s}">Select record</h2><p>Details load automatically after selection.</p></div></div>
+    <div class="card-body">
+      <div class="field"><label for="rid" id="ridLabel">Record</label>
+        <select id="rid"><option value="">Loading…</option></select></div>
+      <hr class="divider">
+      <form id="updateForm" class="form-grid">
+        <div id="updateFields" style="display:contents"></div>
+        <div class="field full form-actions">
+          <button class="btn" id="updateBtn" type="submit" disabled>Save changes</button>
+          <a class="btn secondary" id="cancelLink" href="list.html">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2 data-tpl="{P} register">Register</h2><p>Click a row to select it for editing</p></div></div>
+    <div class="toolbar" id="dataTableToolbar"></div>
+    <div class="table-wrap"><table id="dataTable"></table></div>
+    <div class="table-foot"><span id="dataTableCount">&nbsp;</span><span class="pager" id="dataTablePager"></span></div>
+  </section>
+  </div>
+  <aside class="split-img"><img src="images/update.jpg" onerror="this.onerror=null;this.src='images/update.svg'" alt="Circular arrows around a blood drop with stock bars" style="object-position:center"></aside>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  const editable = ENT.fields.filter(f => f.k !== ENT.pk).map(f => f.k);
+  const setEnabled = on => { editable.forEach(k => $(k).disabled = !on); $('updateBtn').disabled = !on; };
+  $('ridLabel').textContent = ENT.S + ' ID';
+  $('cancelLink').href = 'list.html?t=' + ENTITY_KEY;
+  buildFields('updateFields', 'update');
+
+  async function loadOne(id) {
+    if (!id) { setEnabled(false); return; }
+    try {
+      const r = await fetch(ENT.path + '/' + encodeURIComponent(id));
+      if (!r.ok) throw new Error(await r.text());
+      const [row] = await r.json();
+      if (!row) throw new Error('Record not found.');
+      editable.forEach(k => $(k).value = row[k]);
+      setEnabled(true);
+    } catch (err) { toast(err.message, true); }
+  }
+
+  (async () => {
+    await fillSelect('rid');
+    loadTable();
+    const pre = new URLSearchParams(location.search).get('id');
+    if (pre) { $('rid').value = pre; loadOne(pre); }
+  })();
+
+  $('rid').addEventListener('change', e => loadOne(e.target.value));
+  $('dataTable').addEventListener('click', e => {
+    const tr = e.target.closest('tbody tr'); if (!tr || !tr.cells[0].classList.contains('id')) return;
+    const id = tr.cells[0].textContent.replace('#', '');
+    $('rid').value = id; loadOne(id); window.scrollTo({ top:0, behavior:'smooth' });
+  });
+
+  $('updateForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const id = $('rid').value;
+    if (!id) return toast('Please select a record first.', true);
+    $('updateBtn').disabled = true;
+    try {
+      const r = await fetch(ENT.path + '/' + encodeURIComponent(id), { method:'PUT', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(readFields('update')) });
+      const msg = await r.text();
+      if (!r.ok) throw new Error(/Duplicate/i.test(msg) ? 'Stock for this blood group already exists.' : msg);
+      toast(ENT.S + ' was updated.');
+      await fillSelect('rid'); $('rid').value = id;
+      loadTable();
+    } catch (err) { toast(err.message, true); }
+    $('updateBtn').disabled = false;
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find {S} | Sowmya Blood Bank Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="listOne.html" data-title="Find {S}">
+<div id="page-content">
+<div class="split"><div class="split-main">
+  <div id="entityTabs"></div>
+  <div class="page-head">
+    <div><h1 data-tpl="Find {S}">Find record</h1><p data-tpl="Look up a single {s} by its ID.">Look up a record.</p></div>
+  </div>
+  <section class="card form-narrow">
+    <div class="card-body">
+      <form id="searchForm" class="form-grid">
+        <div class="field full">
+          <label for="rid" id="ridLabel">Record</label>
+          <select id="rid" required><option value="">Loading…</option></select>
+          <span class="help">Records are loaded automatically from the database.</span>
+        </div>
+        <div class="field full form-actions">
+          <button class="btn" type="submit"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Search</button>
+          <a class="btn secondary" id="allLink" href="list.html">View all</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="card" id="resultCard" style="display:none">
+    <div class="card-head"><div><h2 data-tpl="{S} details">Details</h2><p id="resultSub"></p></div></div>
+    <div class="card-body"><div class="detail" id="detail"></div></div>
+    <div class="card-body" style="padding-top:0"><div class="form-actions">
+      <a class="btn secondary sm" id="editLink" href="update.html">Edit this record</a></div></div>
+  </section>
+  </div>
+  <aside class="split-img"><img src="images/search.jpg" onerror="this.onerror=null;this.src='images/search.svg'" alt="Magnifying glass over a blood drop" style="object-position:center 60%"></aside>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+  document.getElementById('ridLabel').textContent = ENT.S + ' ID';
+  document.getElementById('allLink').href = 'list.html?t=' + ENTITY_KEY;
+  fillSelect('rid');
+
+  function valueHtml(k, r) {
+    if (k === 'blood_group') return bgChip(r[k]);
+    if (k === 'status') return statusBadge(r[k]);
+    if (k === 'request_date') return fmtDate(r[k]);
+    if (k === 'units_available') return escapeHtml(r[k]) + ' units';
+    return escapeHtml(r[k]);
+  }
+  document.getElementById('searchForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const id = document.getElementById('rid').value;
+    if (!id) return;
+    try {
+      const r = await fetch(ENT.path + '/' + encodeURIComponent(id));
+      if (!r.ok) throw new Error(await r.text());
+      const [row] = await r.json();
+      if (!row) throw new Error('No record found for that ID.');
+      document.getElementById('resultSub').textContent = ENT.S + ' ID #' + row[ENT.pk];
+      const items = ENT.fields.map(f => [f.label, valueHtml(f.k, row)])
+        .concat((ENT.extraDetail || []).map(x => [x[0], x[1](row)]));
+      document.getElementById('detail').innerHTML = items
+        .map(x => '<div><small>' + x[0] + '</small><strong>' + x[1] + '</strong></div>').join('');
+      document.getElementById('editLink').href = 'update.html?t=' + ENTITY_KEY + '&id=' + encodeURIComponent(row[ENT.pk]);
+      document.getElementById('resultCard').style.display = 'block';
+    } catch (err) { document.getElementById('resultCard').style.display = 'none'; toast(err.message, true); }
+  });
+</script>
+</body>
+</html>

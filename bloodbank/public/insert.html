@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add {S} | Sowmya Blood Bank Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="insert.html" data-title="Add {S}">
+<div id="page-content">
+<div class="split"><div class="split-main">
+  <div id="entityTabs"></div>
+  <div class="page-head">
+    <div><h1 data-tpl="Add {S}">Add record</h1><p data-tpl="Register a new {s} in the blood bank.">Add a record.</p></div>
+  </div>
+  <section class="card form-narrow">
+    <div class="card-head"><div><h2 data-tpl="{S} information">Information</h2><p>Fields marked <span style="color:#dc2626">*</span> are required.</p></div></div>
+    <div class="card-body">
+      <form id="insertForm" class="form-grid">
+        <div class="form-grid" id="insertFields" style="display:contents"></div>
+        <div class="field full form-actions">
+          <button class="btn" type="submit" id="saveBtn">Save record</button>
+          <button class="btn secondary" type="reset">Clear</button>
+          <a class="btn secondary" id="cancelLink" href="list.html">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+  </div>
+  <aside class="split-img"><img src="images/insert.jpg" onerror="this.onerror=null;this.src='images/insert.svg'" alt="Donor registration card with a blood drop badge" style="object-position:62% center"></aside>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+  buildFields('insertFields', 'insert');
+  document.getElementById('cancelLink').href = 'list.html?t=' + ENTITY_KEY;
+  document.getElementById('insertForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('saveBtn'); btn.disabled = true;
+    try {
+      const r = await fetch(ENT.path, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(readFields('insert')) });
+      const msg = await r.text();
+      if (!r.ok) throw new Error(
+        /for key '(?:\w+\.)?blood_group'/i.test(msg) ? 'Stock for this blood group already exists. Use Update Record to change the units.' :
+        /Duplicate/i.test(msg) ? 'A record with this ID already exists.' : msg);
+      toast(ENT.S + ' was added successfully.');
+      e.target.reset();
+      buildFields('insertFields', 'insert');
+    } catch (err) { toast(err.message, true); }
+    btn.disabled = false;
+  });
+</script>
+</body>
+</html>

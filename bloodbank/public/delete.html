@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delete {S} | Sowmya Blood Bank Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="delete.html" data-title="Delete {S}">
+<div id="page-content">
+<div class="split"><div class="split-main">
+  <div id="entityTabs"></div>
+  <div class="page-head">
+    <div><h1 data-tpl="Delete {S}">Delete record</h1><p data-tpl="Permanently remove a {s} from the database.">Remove a record.</p></div>
+  </div>
+  <section class="card form-narrow">
+    <div class="card-body">
+      <div class="notice danger">
+        <svg class="i" viewBox="0 0 24 24"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/></svg>
+        <div><b>This action cannot be undone.</b> Verify the selected record before you continue.</div>
+      </div>
+      <form id="deleteForm" class="form-grid">
+        <div class="field full"><label for="rid" id="ridLabel">Record to delete</label>
+          <select id="rid" required><option value="">Loading…</option></select>
+          <span class="help">You can also click a row in the table below to select it.</span></div>
+        <div class="field full form-actions">
+          <button class="btn danger" type="submit">Delete record</button>
+          <a class="btn secondary" id="cancelLink" href="list.html">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2 data-tpl="Current {p}">Current records</h2><p>Check the record before deleting</p></div></div>
+    <div class="toolbar" id="dataTableToolbar"></div>
+    <div class="table-wrap"><table id="dataTable"></table></div>
+    <div class="table-foot"><span id="dataTableCount">&nbsp;</span><span class="pager" id="dataTablePager"></span></div>
+  </section>
+  </div>
+  <aside class="split-img"><img src="images/delete.jpg" onerror="this.onerror=null;this.src='images/delete.svg'" alt="Trash bin with a crossed-out blood drop" style="object-position:30% center"></aside>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+  document.getElementById('ridLabel').textContent = ENT.S + ' to delete';
+  document.getElementById('cancelLink').href = 'list.html?t=' + ENTITY_KEY;
+  fillSelect('rid');
+  loadTable();
+
+  document.getElementById('dataTable').addEventListener('click', e => {
+    const tr = e.target.closest('tbody tr'); if (!tr || !tr.cells[0].classList.contains('id')) return;
+    document.getElementById('rid').value = tr.cells[0].textContent.replace('#', '');
+    window.scrollTo({ top:0, behavior:'smooth' });
+  });
+
+  document.getElementById('deleteForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const select = document.getElementById('rid');
+    const id = select.value; if (!id) return;
+    const label = select.selectedOptions[0].text;
+    if (!await confirmDialog('Delete this ' + ENT.S.toLowerCase() + '?', label + ' will be permanently removed.')) return;
+    try {
+      const r = await fetch(ENT.path + '/' + encodeURIComponent(id), { method:'DELETE' });
+      const msg = await r.text();
+      if (!r.ok) throw new Error(msg);
+      toast(ENT.S + ' was deleted.');
+      await fillSelect('rid');
+      loadTable();
+    } catch (err) { toast(err.message, true); }
+  });
+</script>
+</body>
+</html>

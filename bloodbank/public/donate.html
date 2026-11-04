@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Record Donation | Sowmya Blood Bank Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="donate.html" data-title="Record Donation">
+<div id="page-content">
+<div class="split"><div class="split-main">
+  <div class="page-head">
+    <div><h1>Record Donation</h1><p>Log a blood donation and add the units to stock automatically.</p></div>
+  </div>
+  <section class="card form-narrow">
+    <div class="card-head"><div><h2>Donation details</h2><p>Fields marked <span style="color:#dc2626">*</span> are required.</p></div></div>
+    <div class="card-body">
+      <div class="tip"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg><div>The units are added to the stock of the donor's blood group and its last-updated date is set to today.</div></div>
+      <form id="donateForm" class="form-grid">
+        <div class="field"><label for="rid">Donor <span class="req">*</span></label>
+          <select id="rid" required><option value="">Loading…</option></select></div>
+        <div class="field"><label for="units">Units donated <span class="req">*</span></label>
+          <input id="units" type="number" min="1" max="5" value="1" required></div>
+        <div class="field full form-actions">
+          <button class="btn" type="submit" id="saveBtn">Add to stock</button>
+          <a class="btn secondary" href="insert.html?t=donors">Register new donor</a>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><div><h2>Current blood stock</h2><p>Updates after each donation</p></div></div>
+    <div class="table-wrap"><table id="stockTable"></table></div>
+    <div class="table-foot"><span id="stockTableCount">&nbsp;</span><span></span></div>
+  </section>
+  </div>
+  <aside class="split-img"><img src="images/donate.jpg" onerror="this.onerror=null;this.src='images/donate.svg'" alt="Heart with a blood drop held in cupped hands" style="object-position:center"></aside>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+  const $ = id => document.getElementById(id);
+  fillSelect('rid', 'Select donor…');
+  const sCols = ENTITIES.stock.cols;
+  async function loadStock() {
+    skeletonRows('stockTable', 4, sCols.length);
+    try { const rows = await getRows('stock'); renderTable('stock', rows, 'stockTable', { tools:false, paginate:false }); return rows; }
+    catch (e) { toast(e.message, true); return []; }
+  }
+  loadStock();
+
+  $('donateForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = $('saveBtn'); btn.disabled = true;
+    try {
+      const r = await fetch('/donations', { method:'POST', headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ donor_id: $('rid').value, units: $('units').value }) });
+      if (!r.ok) throw new Error(await r.text());
+      const d = await r.json();
+      const rows = await loadStock();
+      const now = rows.filter(s => s.blood_group === d.blood_group).reduce((a, s) => a + s.units_available, 0);
+      toast(d.units + ' unit' + (d.units === 1 ? '' : 's') + ' of ' + d.blood_group + ' added. Stock is now ' + now + ' units.');
+      $('units').value = 1;
+    } catch (err) { toast(err.message, true); }
+    btn.disabled = false;
+  });
+</script>
+</body>
+</html>

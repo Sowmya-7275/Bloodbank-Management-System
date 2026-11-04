@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All {P} | Sowmya Blood Bank Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="list.html" data-title="All {P}">
+<div id="page-content">
+<div class="split"><div class="split-main">
+  <div id="entityTabs"></div>
+  <div class="page-head">
+    <div><h1 data-tpl="All {P}">All Records</h1><p data-tpl="Complete register of {p} with search, filter and sorting.">Complete register.</p></div>
+    <div class="form-actions">
+      <button class="btn secondary" onclick="loadTable()"><svg class="i" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-3-6.7"/><path d="M21 3v6h-6"/></svg>Refresh</button>
+      <a class="btn" id="addLink" href="insert.html"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Add record</a>
+    </div>
+  </div>
+  <section class="card">
+    <div class="toolbar" id="dataTableToolbar"></div>
+    <div class="table-wrap"><table id="dataTable"></table></div>
+    <div class="table-foot"><span id="dataTableCount">&nbsp;</span><span class="pager" id="dataTablePager"></span></div>
+  </section>
+  </div>
+  <aside class="split-img"><img src="images/list.jpg" onerror="this.onerror=null;this.src='images/list.svg'" alt="Blood bags stored on labelled shelves by blood group" style="object-position:center"></aside>
+</div>
+</div>
+<script src="common.js"></script>
+<script>
+  document.getElementById('addLink').href = 'insert.html?t=' + ENTITY_KEY;
+  loadTable();
+</script>
+</body>
+</html>
